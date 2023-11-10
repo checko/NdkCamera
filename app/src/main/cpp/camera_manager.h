@@ -29,7 +29,7 @@
 
 //#include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
-
+#include "opencv2/imgproc/types_c.h"
 enum class CaptureSessionState : int32_t {
   READY = 0,  // session is ready
   ACTIVE,     // session is busy
@@ -157,6 +157,7 @@ class NDKCamera {
      // Try to process data without blocking the callback
      std::thread processor([=](){
          LOGD("<---------- Image processing loop ... --------->");
+
          uint8_t *yPixel = nullptr;
          uint8_t *uPixel = nullptr;
          uint8_t *vPixel = nullptr;
@@ -170,7 +171,7 @@ class NDKCamera {
          AImage_getPlaneData(yuv_image, 0, &yPixel, &yLen);
          AImage_getPlaneData(yuv_image, 1, &uPixel, &uLen);
          AImage_getPlaneData(yuv_image, 2, &vPixel, &vLen);
-
+        /*
          uint8_t * data = new uint8_t[yLen + vLen + uLen];
          memcpy(data, yPixel, yLen);
          memcpy(data+yLen, vPixel, vLen);
@@ -185,8 +186,9 @@ class NDKCamera {
          //gray image only use plane Y
          _yuv_gray_img = cv::Mat(1280, 720, CV_8UC1, yPixel);
          cv::rotate(_yuv_gray_img, _yuv_gray_img, cv::ROTATE_90_CLOCKWISE); 
-
+        */
          AImage_delete(yuv_image);
+
       });
       processor.detach();
   }

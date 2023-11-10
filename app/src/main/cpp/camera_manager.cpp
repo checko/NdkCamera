@@ -241,7 +241,7 @@ AImageReader* NDKCamera::createJpegReader()
 {
     AImageReader* reader = nullptr;
     media_status_t status = AImageReader_new(1280, 720, AIMAGE_FORMAT_YUV_420_888,
-                                             1, &reader);
+                                             2, &reader);
     //if (status != AMEDIA_OK)
         // Handle errors here
 

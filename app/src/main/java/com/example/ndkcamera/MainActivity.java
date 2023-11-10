@@ -1,6 +1,8 @@
 package com.example.ndkcamera;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 
 import android.os.Bundle;
@@ -14,8 +16,6 @@ import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -30,7 +30,7 @@ import static android.hardware.camera2.CameraMetadata.LENS_FACING_BACK;
 
 public class MainActivity extends AppCompatActivity 
         implements TextureView.SurfaceTextureListener,
-        ActivityCompat.OnRequestPermissionsResultCallback 
+        ActivityCompat.OnRequestPermissionsResultCallback
 {
     long ndkCamera_;
     private TextureView textureView_;

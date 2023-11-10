@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.4.1)
 project("ndksamplecam")
 
 set(OpenCV_STATIC on)
-set(OpenCV_DIR "/opencv-4.5.4-android-sdk/OpenCV-android-sdk/sdk/native/jni")
+set(OpenCV_DIR "/home/charles-chang/opencv-4.7.0-android-sdk/sdk/native/jni")
 find_package(OpenCV REQUIRED)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -59,44 +59,27 @@ find_library( # Sets the name of the path variable.
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
-
-add_library(SNPE SHARED IMPORTED )
-set_target_properties(SNPE PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libSNPE.so)
-
 add_library(CPP SHARED IMPORTED )
 set_target_properties(CPP PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libc++_shared.so)
 
-add_library(CALC SHARED IMPORTED )
-set_target_properties(CALC PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libcalculator.so)
+#add_library(CALC SHARED IMPORTED )
+#set_target_properties(CALC PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libcalculator.so)
 #
 #add_library(CALC_HTP SHARED IMPORTED )
 #set_target_properties(CALC_HTP PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libcalculator_htp.so)
-#
-
-add_library(PlatformValidatorShared SHARED IMPORTED )
-set_target_properties(PlatformValidatorShared PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libPlatformValidatorShared.so)
-
-add_library(DSP_V2 SHARED IMPORTED )
-set_target_properties(DSP_V2 PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libsnpe_dsp_domains_v2.so)
-#
+# #
 #add_library(DSP_V3 SHARED IMPORTED )
 #set_target_properties(DSP_V3 PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libsnpe_dsp_domains_v2_system.so)
 #
 #
 
-
-
 target_link_libraries( # Specifies the target library.
-        objectrecognition
+        ndksamplecam
 
-        SNPE
         CPP
-        CALC
+#        CALC
 #        CALC_HTP
-        PlatformValidatorShared
-        DSP_V2
 #        DSP_V3
-
         camera2ndk
         mediandk
         android

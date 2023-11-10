@@ -4,14 +4,18 @@ plugins {
 
 android {
     namespace 'com.example.ndkcamera'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.ndkcamera"
         minSdk 30
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
+
+        ndk {
+            abiFilters 'armeabi-v7a'
+        }
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -21,6 +25,12 @@ android {
             }
         }
     }
+
+	sourceSets {
+		main {
+			jniLibs.srcDirs = ['src/main/jniLibs/armeabi-v7a/']
+		}
+	}
 
     buildTypes {
         release {
@@ -42,6 +52,7 @@ android {
 }
 
 dependencies {
+	implementation fileTree(dir:'libs', include: ['*.jar','*.so'])
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
