@@ -1,2 +1,2 @@
 # NdkCamera
-combine Cam2ndk - .so and java to one project
+combine https://github.com/logits-systems/Cam2Ndk - .so and .java to one project
