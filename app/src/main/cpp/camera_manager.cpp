@@ -21,7 +21,6 @@
 #include <media/NdkImage.h>
 #include "camera_manager.h"
 #include "native_debug.h"
-#include "camera_utils.h"
 
 /**
  * Range of Camera Exposure Time:
@@ -52,16 +51,16 @@ NDKCamera::NDKCamera()
   ASSERT(activeCameraId_.size(), "Unknown ActiveCameraIdx");
 
   // Create requested facing camera device
-  CALL_MGR(openCamera(cameraMgr_, activeCameraId_.c_str(), GetDeviceListener(),
-                      &cameras_[activeCameraId_].device_));
+  ACameraManager_openCamera(cameraMgr_, activeCameraId_.c_str(), GetDeviceListener(),
+                      &cameras_[activeCameraId_].device_);
 
-  CALL_MGR(registerAvailabilityCallback(cameraMgr_, GetManagerListener()));
+  ACameraManager_registerAvailabilityCallback(cameraMgr_, GetManagerListener());
 
   // Initialize camera controls(exposure time and sensitivity), pick
   // up value of 2% * range + min as starting value (just a number, no magic)
   ACameraMetadata* metadataObj;
-  CALL_MGR(getCameraCharacteristics(cameraMgr_, activeCameraId_.c_str(),
-                                    &metadataObj));
+  ACameraManager_getCameraCharacteristics(cameraMgr_, activeCameraId_.c_str(),
+                                    &metadataObj);
   ACameraMetadata_const_entry val = {
       0,
   };
@@ -180,11 +179,9 @@ bool NDKCamera::MatchCaptureSizeRequest(int32_t requestWidth,
     disp.Flip();
   }
   ACameraMetadata* metadata;
-  CALL_MGR(
-      getCameraCharacteristics(cameraMgr_, activeCameraId_.c_str(), &metadata));
+  ACameraManager_getCameraCharacteristics(cameraMgr_, activeCameraId_.c_str(), &metadata);
   ACameraMetadata_const_entry entry;
-  CALL_METADATA(getConstEntry(
-      metadata, ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry));
+  ACameraMetadata_getConstEntry(metadata, ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry);
   // format of the data: format, width, height, input?, type int32
   bool foundIt = false;
   DisplayDimension foundRes(4000, 4000);
@@ -266,28 +263,28 @@ void NDKCamera::CreateSession(ANativeWindow* previewWindow,
   //requests_[JPG_CAPTURE_REQUEST_IDX].outputNativeWindow_ = jpgWindow;
   //requests_[JPG_CAPTURE_REQUEST_IDX].template_ = TEMPLATE_STILL_CAPTURE;
 
-  CALL_CONTAINER(create(&outputContainer_));
+  ACaptureSessionOutputContainer_create(&outputContainer_);
 
   for (auto& req : requests_) {
     if (!req.outputNativeWindow_) continue;
 
     ANativeWindow_acquire(req.outputNativeWindow_);
-    CALL_OUTPUT(create(req.outputNativeWindow_, &req.sessionOutput_));
-    CALL_CONTAINER(add(outputContainer_, req.sessionOutput_));
-    CALL_TARGET(create(req.outputNativeWindow_, &req.target_));
-    CALL_DEV(createCaptureRequest(cameras_[activeCameraId_].device_,
-                                  req.template_, &req.request_));
-    CALL_REQUEST(addTarget(req.request_, req.target_));
+    ACaptureSessionOutput_create(req.outputNativeWindow_, &req.sessionOutput_);
+    ACaptureSessionOutputContainer_add(outputContainer_, req.sessionOutput_);
+    ACameraOutputTarget_create(req.outputNativeWindow_, &req.target_);
+    ACameraDevice_createCaptureRequest(cameras_[activeCameraId_].device_,
+                                  req.template_, &req.request_);
+    ACaptureRequest_addTarget(req.request_, req.target_);
 
     /* To capture images */
     req.imageReader = createJpegReader();
     status = AImageReader_getWindow(req.imageReader, &req.imageWindow);
     ANativeWindow_acquire(req.outputNativeWindow_);
 
-    CALL_TARGET(create(req.imageWindow, &req.imageTarget));
-    CALL_REQUEST(addTarget(req.request_, req.imageTarget));
-    CALL_OUTPUT(create(req.imageWindow, &req.imageOutput));
-    CALL_CONTAINER(add(outputContainer_, req.imageOutput));
+    ACameraOutputTarget_create(req.imageWindow, &req.imageTarget);
+    ACaptureRequest_addTarget(req.request_, req.imageTarget);
+    ACaptureSessionOutput_create(req.imageWindow, &req.imageOutput);
+    ACaptureSessionOutputContainer_add(outputContainer_, req.imageOutput);
 
     //ACameraOutputTarget_create(imageWindow, &imageTarget);
     //ACaptureRequest_addTarget(req.request_, imageTarget);
@@ -297,9 +294,9 @@ void NDKCamera::CreateSession(ANativeWindow* previewWindow,
 
   // Create a capture session for the given preview request
   captureSessionState_ = CaptureSessionState::READY;
-  CALL_DEV(createCaptureSession(cameras_[activeCameraId_].device_,
+  ACameraDevice_createCaptureSession(cameras_[activeCameraId_].device_,
                                 outputContainer_, GetSessionListener(),
-                                &captureSession_));
+                                &captureSession_);
 
   if (jpgWindow) {
     ACaptureRequest_setEntry_i32(requests_[JPG_CAPTURE_REQUEST_IDX].request_,
@@ -316,12 +313,12 @@ void NDKCamera::CreateSession(ANativeWindow* previewWindow,
    * (auto control has better effect than author's manual control)
    */
   uint8_t aeModeOff = ACAMERA_CONTROL_AE_MODE_OFF;
-  CALL_REQUEST(setEntry_u8(requests_[PREVIEW_REQUEST_IDX].request_,
-                           ACAMERA_CONTROL_AE_MODE, 1, &aeModeOff));
-  CALL_REQUEST(setEntry_i32(requests_[PREVIEW_REQUEST_IDX].request_,
-                            ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_));
-  CALL_REQUEST(setEntry_i64(requests_[PREVIEW_REQUEST_IDX].request_,
-                            ACAMERA_SENSOR_EXPOSURE_TIME, 1, &exposureTime_));
+  ACaptureRequest_setEntry_u8(requests_[PREVIEW_REQUEST_IDX].request_,
+                           ACAMERA_CONTROL_AE_MODE, 1, &aeModeOff);
+  ACaptureRequest_setEntry_i32(requests_[PREVIEW_REQUEST_IDX].request_,
+                            ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_);
+  ACaptureRequest_setEntry_i64(requests_[PREVIEW_REQUEST_IDX].request_,
+                            ACAMERA_SENSOR_EXPOSURE_TIME, 1, &exposureTime_);
 }
 
 void NDKCamera::CreateSession(ANativeWindow* previewWindow) {
@@ -339,11 +336,11 @@ NDKCamera::~NDKCamera() {
   for (auto& req : requests_) {
     if (!req.outputNativeWindow_) continue;
 
-    CALL_REQUEST(removeTarget(req.request_, req.target_));
+    ACaptureRequest_removeTarget(req.request_, req.target_);
     ACaptureRequest_free(req.request_);
     ACameraOutputTarget_free(req.target_);
 
-    CALL_CONTAINER(remove(outputContainer_, req.sessionOutput_));
+    ACaptureSessionOutputContainer_remove(outputContainer_, req.sessionOutput_);
     ACaptureSessionOutput_free(req.sessionOutput_);
 
     ANativeWindow_release(req.outputNativeWindow_);
@@ -356,12 +353,12 @@ NDKCamera::~NDKCamera() {
 
   for (auto& cam : cameras_) {
     if (cam.second.device_) {
-      CALL_DEV(close(cam.second.device_));
+      ACameraDevice_close(cam.second.device_);
     }
   }
   cameras_.clear();
   if (cameraMgr_) {
-    CALL_MGR(unregisterAvailabilityCallback(cameraMgr_, GetManagerListener()));
+    ACameraManager_unregisterAvailabilityCallback(cameraMgr_, GetManagerListener());
     ACameraManager_delete(cameraMgr_);
     cameraMgr_ = nullptr;
   }
@@ -375,13 +372,13 @@ NDKCamera::~NDKCamera() {
  */
 void NDKCamera::EnumerateCamera(acamera_metadata_enum_acamera_lens_facing facin) {
   ACameraIdList* cameraIds = nullptr;
-  CALL_MGR(getCameraIdList(cameraMgr_, &cameraIds));
+  ACameraManager_getCameraIdList(cameraMgr_, &cameraIds);
 
   for (int i = 0; i < cameraIds->numCameras; ++i) {
     const char* id = cameraIds->cameraIds[i];
 
     ACameraMetadata* metadataObj;
-    CALL_MGR(getCameraCharacteristics(cameraMgr_, id, &metadataObj));
+    ACameraManager_getCameraCharacteristics(cameraMgr_, id, &metadataObj);
 
     int32_t count = 0;
     const uint32_t* tags = nullptr;
@@ -391,7 +388,7 @@ void NDKCamera::EnumerateCamera(acamera_metadata_enum_acamera_lens_facing facin)
         ACameraMetadata_const_entry lensInfo = {
             0,
         };
-        CALL_METADATA(getConstEntry(metadataObj, tags[tagIdx], &lensInfo));
+        ACameraMetadata_getConstEntry(metadataObj, tags[tagIdx], &lensInfo);
         CameraId cam(id);
         cam.facing_ = static_cast<acamera_metadata_enum_android_lens_facing_t>(
             lensInfo.data.u8[0]);
@@ -428,13 +425,12 @@ bool NDKCamera::GetSensorOrientation(int32_t* facing, int32_t* angle) {
 
   ACameraMetadata* metadataObj;
   ACameraMetadata_const_entry face, orientation;
-  CALL_MGR(getCameraCharacteristics(cameraMgr_, activeCameraId_.c_str(),
-                                    &metadataObj));
-  CALL_METADATA(getConstEntry(metadataObj, ACAMERA_LENS_FACING, &face));
+  ACameraManager_getCameraCharacteristics(cameraMgr_, activeCameraId_.c_str(),
+                                    &metadataObj);
+  ACameraMetadata_getConstEntry(metadataObj, ACAMERA_LENS_FACING, &face);
   cameraFacing_ = static_cast<int32_t>(face.data.u8[0]);
 
-  CALL_METADATA(
-      getConstEntry(metadataObj, ACAMERA_SENSOR_ORIENTATION, &orientation));
+  ACameraMetadata_getConstEntry(metadataObj, ACAMERA_SENSOR_ORIENTATION, &orientation);
 
   LOGI("====Current SENSOR_ORIENTATION: %8d", orientation.data.i32[0]);
 
@@ -452,9 +448,9 @@ bool NDKCamera::GetSensorOrientation(int32_t* facing, int32_t* angle) {
  */
 void NDKCamera::StartPreview(bool start) {
   if (start) {
-    CALL_SESSION(setRepeatingRequest(captureSession_, nullptr, 1,
+    ACameraCaptureSession_setRepeatingRequest(captureSession_, nullptr, 1,
                                      &requests_[PREVIEW_REQUEST_IDX].request_,
-                                     nullptr));
+                                     nullptr);
   } else if (!start && captureSessionState_ == CaptureSessionState::ACTIVE) {
     ACameraCaptureSession_stopRepeating(captureSession_);
   }
@@ -470,9 +466,9 @@ bool NDKCamera::TakePhoto(void) {
     ACameraCaptureSession_stopRepeating(captureSession_);
   }
 
-  CALL_SESSION(capture(captureSession_, GetCaptureCallback(), 1,
+  ACameraCaptureSession_capture(captureSession_, GetCaptureCallback(), 1,
                        &requests_[JPG_CAPTURE_REQUEST_IDX].request_,
-                       &requests_[JPG_CAPTURE_REQUEST_IDX].sessionSequenceId_));
+                       &requests_[JPG_CAPTURE_REQUEST_IDX].sessionSequenceId_);
   return true;
 }
 
@@ -481,14 +477,13 @@ void NDKCamera::UpdateCameraRequestParameter(int32_t code, int64_t val) {
   switch (code) {
     case ACAMERA_SENSOR_EXPOSURE_TIME:
       exposureTime_ = val;
-      CALL_REQUEST(setEntry_i64(request, ACAMERA_SENSOR_EXPOSURE_TIME, 1,
-                                &exposureTime_));
+          ACaptureRequest_setEntry_i64(request, ACAMERA_SENSOR_EXPOSURE_TIME, 1,
+                                &exposureTime_);
       break;
 
     case ACAMERA_SENSOR_SENSITIVITY:
       sensitivity_ = val;
-      CALL_REQUEST(
-          setEntry_i32(request, ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_));
+      ACaptureRequest_setEntry_i32(request, ACAMERA_SENSOR_SENSITIVITY, 1, &sensitivity_);
       break;
     default:
       ASSERT(false, "==ERROR==: error code for CameraParameterChange: %d",
@@ -497,10 +492,9 @@ void NDKCamera::UpdateCameraRequestParameter(int32_t code, int64_t val) {
   }
 
   uint8_t aeModeOff = ACAMERA_CONTROL_AE_MODE_OFF;
-  CALL_REQUEST(setEntry_u8(request, ACAMERA_CONTROL_AE_MODE, 1, &aeModeOff));
-  CALL_SESSION(
-      setRepeatingRequest(captureSession_, nullptr, 1, &request,
-                          &requests_[PREVIEW_REQUEST_IDX].sessionSequenceId_));
+  ACaptureRequest_setEntry_u8(request, ACAMERA_CONTROL_AE_MODE, 1, &aeModeOff);
+  ACameraCaptureSession_setRepeatingRequest(captureSession_, nullptr, 1, &request,
+                          &requests_[PREVIEW_REQUEST_IDX].sessionSequenceId_);
 }
 
 /**

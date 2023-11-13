@@ -40,7 +40,6 @@ add_library( # Sets the name of the library.
         camera_engine
         camera_listeners
         camera_manager
-        camera_utils
         )
 
 # Searches for a specified prebuilt library and stores the path as a

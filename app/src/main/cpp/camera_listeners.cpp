@@ -20,7 +20,6 @@
 
 #include "camera_manager.h"
 #include "native_debug.h"
-#include "camera_utils.h"
 
 /*
  * Camera Manager Listener object
@@ -96,7 +95,6 @@ void NDKCamera::OnDeviceError(ACameraDevice* dev, int err) {
   std::string id(ACameraDevice_getId(dev));
 
   LOGI("CameraDevice %s is in error %#x", id.c_str(), err);
-  PrintCameraDeviceError(err);
 
   CameraId& cam = cameras_[id];
 
@@ -233,7 +231,7 @@ void NDKCamera::OnCaptureSequenceEnd(ACameraCaptureSession* session,
     return;
 
   // resume preview
-  CALL_SESSION(setRepeatingRequest(captureSession_, nullptr, 1,
+  ACameraCaptureSession_setRepeatingRequest(captureSession_, nullptr, 1,
                                    &requests_[PREVIEW_REQUEST_IDX].request_,
-                                   nullptr));
+                                   nullptr);
 }
