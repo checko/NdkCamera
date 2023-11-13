@@ -18,7 +18,6 @@
 #include <cinttypes>
 #include <thread>
 
-#include <camera/NdkCameraManager.h>
 #include "camera_manager.h"
 #include "native_debug.h"
 #include "camera_utils.h"

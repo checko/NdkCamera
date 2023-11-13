@@ -19,7 +19,6 @@
 #include <typeinfo>
 #include <cinttypes>
 #include <media/NdkImage.h>
-#include <camera/NdkCameraManager.h>
 #include "native_debug.h"
 #include "camera_utils.h"
 
